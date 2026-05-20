@@ -1,0 +1,19 @@
+:root {
+    --color-ivory: #F4F7EA;
+    --color-lavender-blush: #E2D9E2;
+    --color-thistle: #CDB9DD;
+    --color-sky-reflection: #75ADC9;
+    --color-soft-periwinkle: #9580D4;
+}
+
+body {
+    background: linear-gradient(135deg, var(--color-lavender-blush) 0%, var(--color-thistle) 40%, var(--color-soft-periwinkle) 100%);
+    min-height: 100vh;
+}
+
+.glass-card {
+    background: rgba(244, 247, 234, 0.85); 
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}

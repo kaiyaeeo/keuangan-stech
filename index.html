@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Keuangan Soedirman Technoporia</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="text-gray-800 font-sans antialiased pb-12">
+
+    <header class="w-full px-4 pt-8 pb-4">
+        <div class="max-w-6xl mx-auto glass-card rounded-3xl p-6 shadow-xl flex flex-col md:flex-row justify-between items-center gap-4 border border-white/50">
+            <div class="flex items-center gap-4">
+                <div class="p-3 rounded-2xl bg-[#9580D4] text-[#F4F7EA] shadow-md shadow-[#9580D4]/30 animate-pulse">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l2.4 7.2L22 11.6l-5.6 4.4L18.8 22 12 17.6 5.2 22l2.4-6-5.6-4.4 7.6-2.4z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-[#9580D4] tracking-wide uppercase">Soedirman Technoporia</h1>
+                    <p class="text-xs font-semibold text-[#75ADC9] tracking-wider uppercase">Real-Time Financial Transparency Dashboard</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 bg-[#75ADC9]/20 px-4 py-2 rounded-2xl text-xs font-bold text-[#75ADC9] border border-[#75ADC9]/30">
+                    <span class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping"></span>
+                    Live Google Sheets
+                </div>
+                <button onclick="muatDataKeuangan()" class="cursor-pointer px-5 py-2.5 bg-[#9580D4] hover:bg-[#836cbd] text-[#F4F7EA] font-bold rounded-2xl shadow-lg shadow-[#9580D4]/30 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm">
+                    <span>🔄</span> Refresh Data
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-card p-6 rounded-3xl shadow-lg border-l-8 border-[#75ADC9] transform transition duration-300 hover:scale-[1.02]">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Pemasukan</span>
+                    <span class="text-xl">📈</span>
+                </div>
+                <h3 id="total-masuk" class="text-3xl font-black text-[#75ADC9] mt-3">Rp 0</h3>
+                <p class="text-[11px] text-gray-400 mt-1">Akumulasi dana masuk real-time</p>
+            </div>
+
+            <div class="glass-card p-6 rounded-3xl shadow-lg border-l-8 border-[#9580D4] transform transition duration-300 hover:scale-[1.02]">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Pengeluaran</span>
+                    <span class="text-xl">📉</span>
+                </div>
+                <h3 id="total-keluar" class="text-3xl font-black text-[#9580D4] mt-3">Rp 0</h3>
+                <p class="text-[11px] text-gray-400 mt-1">Total alokasi & pengeluaran divisi</p>
+            </div>
+
+            <div class="glass-card p-6 rounded-3xl shadow-lg border-l-8 border-[#CDB9DD] transform transition duration-300 hover:scale-[1.02] bg-gradient-to-br from-[#F4F7EA] to-white/90">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Sisa Saldo Kas</span>
+                    <span class="text-xl">💰</span>
+                </div>
+                <h3 id="sisa-saldo" class="text-3xl font-black text-gray-800 mt-3">Rp 0</h3>
+                <div class="w-full bg-gray-200 h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div id="saldo-progress" class="bg-gradient-to-r from-[#75ADC9] to-[#9580D4] h-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3">
+            <div class="glass-card p-6 rounded-3xl shadow-lg border border-white/60">
+                <div class="mb-4">
+                    <h2 class="text-md font-black text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                        <span>📝</span> Pusat Alur Kerja & Pelaporan Panitia
+                    </h2>
+                    <p class="text-xs text-gray-500">Silakan klik salah satu layanan di bawah ini untuk menginput data keuangan melalui Google Form resmi.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <a href="https://forms.gle/nz8EdwC1rSqwX5kH6" target="_blank" class="flex items-center justify-between p-4 bg-[#75ADC9]/10 hover:bg-[#75ADC9]/20 border border-[#75ADC9]/30 rounded-2xl transition duration-300 hover:scale-[1.02] group">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl p-2 bg-white rounded-xl shadow-xs">📥</span>
+                            <div class="text-left">
+                                <h4 class="text-xs font-black text-[#4c819c] uppercase tracking-wide">Lapor Dana Masuk</h4>
+                                <p class="text-[11px] text-gray-500">Input hasil sponsor, danus, tiket</p>
+                            </div>
+                        </div>
+                        <span class="text-gray-400 group-hover:text-[#4c819c] transition font-bold text-lg">➔</span>
+                    </a>
+
+                    <a href="https://forms.gle/s5ku61zCDwESPR5L8" target="_blank" class="flex items-center justify-between p-4 bg-[#9580D4]/10 hover:bg-[#9580D4]/20 border border-[#9580D4]/30 rounded-2xl transition duration-300 hover:scale-[1.02] group">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl p-2 bg-white rounded-xl shadow-xs">📤</span>
+                            <div class="text-left">
+                                <h4 class="text-xs font-black text-[#6754a3] uppercase tracking-wide">Lapor Dana Keluar</h4>
+                                <p class="text-[11px] text-gray-500">Catat nota belanja / kwitansi divisi</p>
+                            </div>
+                        </div>
+                        <span class="text-gray-400 group-hover:text-[#6754a3] transition font-bold text-lg">➔</span>
+                    </a>
+
+                    <a href="https://forms.gle/AMdhDsGy1Wy2m8BZ7" target="_blank" class="flex items-center justify-between p-4 bg-[#CDB9DD]/20 hover:bg-[#CDB9DD]/40 border border-[#CDB9DD]/60 rounded-2xl transition duration-300 hover:scale-[1.02] group">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl p-2 bg-white rounded-xl shadow-xs">📄</span>
+                            <div class="text-left">
+                                <h4 class="text-xs font-black text-purple-900 uppercase tracking-wide">Pengajuan Dana</h4>
+                                <p class="text-[11px] text-gray-600">Form pengajuan budget / reimbursement</p>
+                            </div>
+                        </div>
+                        <span class="text-purple-400 group-hover:text-purple-900 transition font-bold text-lg">➔</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-1 flex flex-col gap-6">
+            <div class="glass-card p-6 rounded-3xl shadow-lg flex-1 flex flex-col">
+                <h2 class="text-sm font-black text-[#9580D4] uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <span>📊</span> Proporsi Pengeluaran Divisi
+                </h2>
+                <div class="relative flex-1 min-h-[220px] flex items-center justify-center">
+                    <canvas id="chartDivisi"></canvas>
+                </div>
+            </div>
+            
+            <div class="glass-card p-6 rounded-3xl shadow-lg bg-gradient-to-br from-[#9580D4]/10 to-transparent">
+                <h2 class="text-sm font-black text-gray-700 uppercase tracking-wider mb-3">Efisiensi Anggaran</h2>
+                <div class="flex justify-between items-center text-xs text-gray-600 mb-1">
+                    <span>Rasio Pengeluaran vs Pemasukan:</span>
+                    <span id="rasio-teks" class="font-bold">0%</span>
+                </div>
+                <div class="w-full bg-black/5 h-2 rounded-full overflow-hidden">
+                    <div id="rasio-bar" class="bg-[#9580D4] h-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2">
+            <div class="glass-card rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
+                <div class="p-6 border-b border-gray-200/50 flex justify-between items-center flex-wrap gap-4">
+                    <div>
+                        <h2 class="text-md font-black text-gray-800 uppercase tracking-wider">Arus Kas & Buku Besar</h2>
+                        <p class="text-xs text-gray-400">Mutasi pengeluaran dan pemasukan panitia</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <select id="filter-kategori" onchange="filterData()" class="px-3 py-1.5 bg-white/80 rounded-xl text-xs font-semibold shadow-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#9580D4]">
+                            <option value="semua">Semua Transaksi</option>
+                            <option value="masuk">Hanya Masuk</option>
+                            <option value="keluar">Hanya Keluar</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto flex-1 max-h-[420px] overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#F4F7EA]/60 text-gray-500 uppercase text-[10px] tracking-widest border-b border-gray-200/40 sticky top-0 backdrop-blur-md">
+                                <th class="px-6 py-4 font-bold">Tanggal</th>
+                                <th class="px-6 py-4 font-bold">Keterangan</th>
+                                <th class="px-6 py-4 font-bold">Divisi</th>
+                                <th class="px-6 py-4 font-bold text-right">Nominal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabel-transaksi" class="divide-y divide-gray-200/30 text-xs font-medium">
+                            <tr>
+                                <td colspan="4" class="px-6 py-16 text-center text-gray-400">
+                                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-[#9580D4] border-t-transparent mb-2"></div>
+                                    <p>Menghubungkan ke Google Sheets...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="max-w-6xl mx-auto px-4 text-center text-xs text-white/80 font-semibold mt-8 drop-shadow-sm">
+        &copy; 2026 Tim Bendahara Soedirman Technoporia. Powered by Tailwind, Chart.js & Google Sheets.
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
