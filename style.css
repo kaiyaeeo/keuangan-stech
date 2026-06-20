@@ -7,11 +7,11 @@
 :root {
     --black:    #0A0A0A;
     --white:    #FAFAF5;
-    --yellow:   #70BDB2;
-    --violet:   #FF8787;
-    --sky:      #FDE047;
+    --yellow:   #FF8787;
+    --violet:   #FFCB77;
+    --sky:      #70BDB2;
     --red:      #E8433A;
-    --green:    #3CCF6E;
+    --green:    #a1d9b3;
     --border:   3px solid #0A0A0A;
     --shadow:   5px 5px 0px #0A0A0A;
     --shadow-sm:3px 3px 0px #0A0A0A;
