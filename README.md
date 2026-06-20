@@ -1,10 +1,10 @@
-# 📊 Soedirman Technoporia Financial Transparency Dashboard
+# 📊 Soedirman Technophoria Financial Transparency Dashboard
 
 [![Sistem Terhubung Real-Time](https://img.shields.io/badge/Database-Google%20Sheets-emerald?style=flat-flat&logo=google-sheets)](https://docs.google.com/spreadsheets/d/1embeXKcM-5aLoGiyyA3WpPSYnqcPutmVGETGPJ5LP0U/)
 [![Framework Frontend](https://img.shields.io/badge/Frontend-Tailwind%20CSS%20v4-blue?style=flat-flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![Visualisasi Data](https://img.shields.io/badge/Charts-Chart.js-ff6384?style=flat-flat&logo=chart.dotjs)](https://www.chartjs.org/)
 
-Dashboard transparansi keuangan real-time yang dirancang khusus untuk manajemen arus kas masuk dan keluar pada *event* **Soedirman Technoporia Universitas Jenderal Soedirman (UNSOED)**. 
+Dashboard transparansi keuangan real-time yang dirancang khusus untuk manajemen arus kas masuk dan keluar pada *event* **Soedirman Technophoria Universitas Jenderal Soedirman (UNSOED)**. 
 
 Sistem ini mengadopsi arsitektur *serverless data-fetching* yang menghubungkan antarmuka *frontend* secara langsung ke **Google Sheets API vviz** dan **Google Forms**. Hal ini memungkinkan seluruh panitia dan pihak eksternal memantau efisiensi anggaran, proporsi pengeluaran divisi, dan mutasi buku besar secara instan tanpa memerlukan manajemen server backend yang rumit.
 

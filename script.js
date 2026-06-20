@@ -1,44 +1,38 @@
-// Masukkan ID Spreadsheet kamu di sini
 const SPREADSHEET_ID = '1embeXKcM-5aLoGiyyA3WpPSYnqcPutmVGETGPJ5LP0U';
 const SHEET_NAME = 'Transaksi';
 
-let semuaDataArray = []; 
-let chartInstance = null; 
+let semuaDataArray = [];
+let chartInstance = null;
 
-// Fungsi utility untuk memformat nominal angka biasa menjadi format mata uang Rupiah
 function formatRupiah(angka) {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(angka);
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency', currency: 'IDR', maximumFractionDigits: 0
+    }).format(angka);
 }
 
-// Fungsi utama menarik data dari database Google Sheets secara real-time
 async function muatDataKeuangan() {
-    // Jalur pintas API Visualisasi Google untuk mendapatkan data berstruktur JSON murni
     const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tq=`;
-    
+
     try {
         const respon = await fetch(url);
-        if (!respon.ok) throw new Error('Gagal fetch data dari server cloud Google Sheets');
+        if (!respon.ok) throw new Error('Gagal fetch');
         const teks = await respon.text();
-        
-        // Memotong pembungkus fungsi string bawaan API Google gviz agar menghasilkan JSON valid
+
         const jsonMurni = JSON.parse(teks.substring(teks.indexOf("{"), teks.lastIndexOf("}") + 1));
         const rows = jsonMurni.table.rows;
 
         semuaDataArray = [];
-        let totalMasuk = 0;
-        let totalKeluar = 0;
+        let totalMasuk = 0, totalKeluar = 0;
         let pengeluaranDivisi = {};
 
         rows.forEach(row => {
-            // Pemetaan indeks array kolom: 0=Tanggal, 1=Keterangan, 2=Kategori, 3=Nominal, 4=Divisi
-            const tanggal = row.c[0] ? row.c[0].f || row.c[0].v : '-';
+            const tanggal    = row.c[0] ? row.c[0].f || row.c[0].v : '-';
             const keterangan = row.c[1] ? row.c[1].v : '-';
-            const kategori = row.c[2] ? row.c[2].v : '';
-            const nominal = row.c[3] ? parseFloat(row.c[3].v) || 0 : 0;
-            const divisi = row.c[4] ? row.c[4].v : '-';
+            const kategori   = row.c[2] ? row.c[2].v : '';
+            const nominal    = row.c[3] ? parseFloat(row.c[3].v) || 0 : 0;
+            const divisi     = row.c[4] ? row.c[4].v : '-';
 
-            if (!kategori) return; // Mengabaikan iterasi jika kolom kategori baris kosong
-
+            if (!kategori) return;
             const kategoriClean = kategori.toLowerCase().trim();
 
             if (kategoriClean === 'masuk') totalMasuk += nominal;
@@ -51,120 +45,121 @@ async function muatDataKeuangan() {
             semuaDataArray.push({ tanggal, keterangan, kategori: kategoriClean, nominal, divisi });
         });
 
-        // Manipulasi DOM pada komponen info widget atas
-        document.getElementById('total-masuk').innerText = formatRupiah(totalMasuk);
+        document.getElementById('total-masuk').innerText  = formatRupiah(totalMasuk);
         document.getElementById('total-keluar').innerText = formatRupiah(totalKeluar);
-        
-        const sisaSaldo = totalMasuk - totalKeluar;
-        const elemenSaldo = document.getElementById('sisa-saldo');
-        elemenSaldo.innerText = formatRupiah(sisaSaldo);
-        elemenSaldo.className = sisaSaldo < 0 ? "text-3xl font-black text-rose-600 mt-3" : "text-3xl font-black text-slate-800 mt-3";
 
-        // Kontrol kalkulasi visual komponen progress bar sisa kas
+        const sisaSaldo = totalMasuk - totalKeluar;
+        const elSaldo   = document.getElementById('sisa-saldo');
+        elSaldo.innerText  = formatRupiah(sisaSaldo);
+        elSaldo.style.color = sisaSaldo < 0 ? 'var(--red)' : 'var(--black)';
+
         const rasioSaldo = totalMasuk > 0 ? Math.min((sisaSaldo / totalMasuk) * 100, 100) : 0;
         document.getElementById('saldo-progress').style.width = `${Math.max(rasioSaldo, 0)}%`;
 
-        // Kontrol kalkulasi rasio efisiensi budget beban operasional
         const rasioBeban = totalMasuk > 0 ? Math.min((totalKeluar / totalMasuk) * 100, 100) : 0;
-        document.getElementById('rasio-teks').innerText = `${rasioBeban.toFixed(1)}%`;
-        document.getElementById('rasio-bar').style.width = `${rasioBeban}%`;
-        
-        // Memicu render tabel mutasi buku besar & diagram lingkaran
+        document.getElementById('rasio-teks').innerText        = `${rasioBeban.toFixed(1)}%`;
+        document.getElementById('rasio-bar').style.width       = `${rasioBeban}%`;
+
         tampilkanDataKeTabel(semuaDataArray);
         updateGrafikDivisi(pengeluaranDivisi);
 
     } catch (error) {
-        console.error("Gagal memuat data keuangan:", error);
+        console.error("Gagal memuat data:", error);
         document.getElementById('tabel-transaksi').innerHTML = `
             <tr>
-                <td colspan="4" class="px-6 py-10 text-center text-rose-500 font-bold bg-rose-50/50">
-                    ⚠️ Gagal memuat data keuangan secara real-time. <br>
-                    <span class="text-[11px] font-medium text-gray-500">Pastikan nama tab di Google Sheets adalah "Transaksi" dan hak aksesnya sudah disetel ke "Siapa saja yang memiliki link" (Viewer).</span>
+                <td colspan="4" style="padding: 48px 24px; text-align: center;">
+                    <div style="font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--red); margin-bottom: 8px;">[ERROR] Gagal memuat data</div>
+                    <p style="font-family: 'Space Mono', monospace; font-size: 0.6rem; color: #666;">Pastikan tab "Transaksi" ada dan akses Google Sheets = Viewer publik.</p>
                 </td>
             </tr>
         `;
     }
 }
 
-// Fungsi render mutasi daftar transaksi ke dalam tabel HTML secara terstruktur
 function tampilkanDataKeTabel(data) {
-    const elemenTabel = document.getElementById('tabel-transaksi');
-    elemenTabel.innerHTML = '';
+    const el = document.getElementById('tabel-transaksi');
+    el.innerHTML = '';
 
     if (data.length === 0) {
-        elemenTabel.innerHTML = `<tr><td colspan="4" class="px-6 py-10 text-center text-gray-400">Tidak ada data transaksi ditemukan.</td></tr>`;
+        el.innerHTML = `<tr><td colspan="4" style="padding: 48px 24px; text-align: center; font-family: 'Space Mono', monospace; font-size: 0.65rem; color: #999; text-transform: uppercase; letter-spacing: 0.08em;">// Tidak ada transaksi</td></tr>`;
         return;
     }
 
     data.forEach(item => {
-        const isMasuk = item.kategori === 'masuk';
-        const kelasBadgeKategori = isMasuk 
-            ? 'bg-[#75ADC9]/20 text-[#4c819c] border border-[#75ADC9]/30' 
-            : 'bg-[#9580D4]/20 text-[#6754a3] border border-[#9580D4]/30';
+        const isMasuk      = item.kategori === 'masuk';
+        const warnaNominal = isMasuk ? '#1a6a8f' : '#5a3fa0';
+        const tanda        = isMasuk ? '+' : '−';
 
-        const barisHtml = `
-            <tr class="hover:bg-white/40 transition duration-150">
-                <td class="px-6 py-4 text-gray-400 font-mono text-[11px] whitespace-nowrap">${item.tanggal}</td>
-                <td class="px-6 py-4">
-                    <div class="font-bold text-gray-800">${item.keterangan}</div>
-                    <span class="inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] ${kelasBadgeKategori} uppercase tracking-wider">${item.kategori}</span>
+        el.innerHTML += `
+            <tr>
+                <td style="padding: 13px 20px; font-family: 'Space Mono', monospace; font-size: 0.6rem; color: #888; white-space: nowrap;">${item.tanggal}</td>
+                <td style="padding: 13px 20px;">
+                    <div style="font-weight: 700; font-size: 0.78rem; margin-bottom: 5px;">${item.keterangan}</div>
+                    <span class="badge ${isMasuk ? 'badge-masuk' : 'badge-keluar'}">${item.kategori}</span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="bg-white/80 border border-gray-200/50 px-2.5 py-1 rounded-xl text-gray-600 text-[11px] font-bold shadow-xs">${item.divisi}</span>
+                <td style="padding: 13px 20px;">
+                    <span class="divisi-chip">${item.divisi}</span>
                 </td>
-                <td class="px-6 py-4 text-right font-bold text-base whitespace-nowrap ${isMasuk ? 'text-[#75ADC9]' : 'text-[#9580D4]'}">
-                    ${isMasuk ? '+' : '-'}${formatRupiah(item.nominal)}
+                <td style="padding: 13px 20px; text-align: right; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 0.82rem; color: ${warnaNominal}; white-space: nowrap;">
+                    ${tanda} ${formatRupiah(item.nominal)}
                 </td>
             </tr>
         `;
-        elemenTabel.innerHTML += barisHtml;
     });
 }
 
-// Fungsi penanganan filter dropdown interaktif
 function filterData() {
-    const filterValue = document.getElementById('filter-kategori').value;
-    if (filterValue === 'semua') {
-        tampilkanDataKeTabel(semuaDataArray);
-    } else {
-        const dataFiltered = semuaDataArray.filter(item => item.kategori === filterValue);
-        tampilkanDataKeTabel(dataFiltered);
-    }
+    const v = document.getElementById('filter-kategori').value;
+    tampilkanDataKeTabel(v === 'semua' ? semuaDataArray : semuaDataArray.filter(i => i.kategori === v));
 }
 
-// Fungsi kontrol inisialisasi & re-draw chart lingkaran (Doughnut Chart) Chart.js
 function updateGrafikDivisi(dataDivisi) {
     const labels = Object.keys(dataDivisi);
     const values = Object.values(dataDivisi);
-    const ctx = document.getElementById('chartDivisi').getContext('2d');
+    const ctx    = document.getElementById('chartDivisi').getContext('2d');
 
-    if (chartInstance) {
-        chartInstance.destroy(); // Hancurkan sisa instansiasi objek chart lama agar tidak tumpang tindih
-    }
-
-    if (labels.length === 0) return; 
+    if (chartInstance) chartInstance.destroy();
+    if (labels.length === 0) return;
 
     chartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: labels,
+            labels,
             datasets: [{
                 data: values,
-                backgroundColor: ['#9580D4', '#75ADC9', '#CDB9DD', '#E2D9E2', '#F4F7EA'],
-                borderWidth: 2,
-                borderColor: '#ffffff'
+                backgroundColor: ['#FF8787', '#FDE047', '#70BDB2', '#3CCF6E', '#E8433A'],
+                borderWidth: 3,
+                borderColor: '#0A0A0A',
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12, padding: 12 } }
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 10, weight: '700', family: 'Space Mono' },
+                        boxWidth: 12, boxHeight: 12,
+                        padding: 12,
+                        color: '#0A0A0A',
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#0A0A0A',
+                    titleColor: '#70BDB2',
+                    bodyColor: '#FAFAF5',
+                    padding: 12,
+                    titleFont: { weight: '700', family: 'Space Mono', size: 11 },
+                    bodyFont:  { family: 'Space Mono', size: 11 },
+                    callbacks: {
+                        label: ctx => ` ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(ctx.parsed)}`
+                    }
+                }
             },
-            cutout: '65%'
+            cutout: '60%',
         }
     });
 }
 
-// Lifecycle Hooks: Memicu request data sesaat setelah window browser selesai memuat struktur DOM
 window.onload = muatDataKeuangan;
