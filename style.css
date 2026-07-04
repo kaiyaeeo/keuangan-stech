@@ -181,31 +181,6 @@ tbody tr.row-warning {
 }
 tbody tr.row-warning:hover { background: rgba(232, 67, 58, 0.16); }
 
-/* === PROTEKSI RINGAN (mode admin) === */
-.konten-sensitif {
-    filter: none;
-    transition: filter 0.2s ease;
-}
-body:not(.mode-admin) .konten-sensitif {
-    filter: blur(7px);
-    pointer-events: none;
-    user-select: none;
-}
-.gerbang-admin {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: rgba(250, 250, 245, 0.55);
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    cursor: pointer;
-    z-index: 5;
-}
-body:not(.mode-admin) .gerbang-admin { display: flex; }
-body.mode-admin .gerbang-admin { display: none; }
-
 /* === FILTER BAR (date inputs) === */
 input[type="date"], input[type="text"]#cari-transaksi {
     border: var(--border);

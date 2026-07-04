@@ -2,14 +2,11 @@ const SPREADSHEET_ID = '1embeXKcM-5aLoGiyyA3WpPSYnqcPutmVGETGPJ5LP0U';
 const SHEET_NAME = 'Transaksi';
 const SHEET_PENGAJUAN = 'Pengajuan';
 const SHEET_ANGGARAN = 'Anggaran';
-const SALDO_MINIMUM = 1000000; 
-const HASH_PASSWORD_ADMIN = 'fa76274fb5c27d986c3bdacdca40f9c5865acf7bf24c3e33af11cfbb06c1f112'; // default password: stech2026
 
 let semuaDataArray = [];
 let semuaDataPengajuan = [];
 let semuaDataAnggaran = [];
-let realisasiPerDivisiGlobal = {}; 
-let modeAdminAktif = false;
+let realisasiPerDivisiGlobal = {}; // diisi ulang setiap muatDataKeuangan()
 let chartInstance = null;
 
 // ---------- UTILITAS ----------
@@ -134,8 +131,6 @@ async function muatDataKeuangan() {
 
         const rasioSaldo = totalMasuk > 0 ? Math.min((sisaSaldo / totalMasuk) * 100, 100) : 0;
         document.getElementById('saldo-progress').style.width = `${Math.max(rasioSaldo, 0)}%`;
-
-        perbaruiPeringatanSaldoMinimum(sisaSaldo);
 
         realisasiPerDivisiGlobal = pengeluaranDivisi;
 
@@ -277,22 +272,6 @@ function resetFilterTransaksi() {
     document.getElementById('tanggal-dari').value = '';
     document.getElementById('tanggal-sampai').value = '';
     terapkanFilterTransaksi();
-}
-
-// ---------- PERINGATAN SALDO MINIMUM ----------
-
-function perbaruiPeringatanSaldoMinimum(sisaSaldo) {
-    const el = document.getElementById('saldo-minimum-teks');
-    if (!el) return;
-
-    if (sisaSaldo < SALDO_MINIMUM) {
-        const kurang = SALDO_MINIMUM - sisaSaldo;
-        el.innerHTML = `⚠ Di bawah cadangan minimum Rp1.000.000 — kurang ${formatRupiah(kurang)}`;
-        el.style.color = 'var(--red)';
-    } else {
-        el.innerHTML = `✓ Cadangan minimum Rp1.000.000 aman`;
-        el.style.color = '#3a6b3a';
-    }
 }
 
 // ---------- CHART DIVISI ----------
@@ -534,58 +513,6 @@ function tampilkanAnggaran(dataAnggaran) {
     });
 }
 
-// ---------- MODE ADMIN (proteksi ringan) ----------
-// Catatan: ini proteksi RINGAN untuk mencegah orang iseng melihat nominal
-// per transaksi & link bukti nota. Password di-hash (SHA-256) supaya tidak
-// polos terbaca di source code, tapi ini BUKAN keamanan tingkat tinggi —
-// jangan taruh data yang benar-benar rahasia di balik ini.
-
-async function hashSHA256(teks) {
-    const enc = new TextEncoder().encode(teks);
-    const buf = await crypto.subtle.digest('SHA-256', enc);
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function bukaModeAdmin() {
-    if (modeAdminAktif) {
-        keluarModeAdmin();
-        return;
-    }
-    const pass = prompt('Masukkan password admin bendahara:');
-    if (pass === null) return;
-
-    const hash = await hashSHA256(pass);
-    if (hash === HASH_PASSWORD_ADMIN) {
-        modeAdminAktif = true;
-        document.body.classList.add('mode-admin');
-        sessionStorage.setItem('stechModeAdmin', '1');
-        perbaruiTombolAdmin();
-    } else {
-        alert('Password salah.');
-    }
-}
-
-function keluarModeAdmin() {
-    modeAdminAktif = false;
-    document.body.classList.remove('mode-admin');
-    sessionStorage.removeItem('stechModeAdmin');
-    perbaruiTombolAdmin();
-}
-
-function perbaruiTombolAdmin() {
-    const btn = document.getElementById('tombol-admin');
-    if (!btn) return;
-    btn.innerHTML = modeAdminAktif ? '🔓 Keluar Mode Admin' : '🔒 Mode Admin';
-}
-
-function pulihkanSesiAdmin() {
-    if (sessionStorage.getItem('stechModeAdmin') === '1') {
-        modeAdminAktif = true;
-        document.body.classList.add('mode-admin');
-        perbaruiTombolAdmin();
-    }
-}
-
 // ---------- MUAT SEMUA (Transaksi + Pengajuan + Anggaran) ----------
 
 async function muatSemuaData() {
@@ -597,7 +524,4 @@ async function muatSemuaData() {
 
 // ---------- INIT ----------
 
-window.onload = () => {
-    pulihkanSesiAdmin();
-    muatSemuaData();
-};
+window.onload = muatSemuaData;
