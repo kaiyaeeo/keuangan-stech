@@ -1,7 +1,3 @@
-/* =============================================
-   SOEDIRMAN Technophoria — NEO-BRUTALISM
-   ============================================= */
-
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
@@ -105,6 +101,28 @@ body {
 }
 .badge-masuk  { background: var(--sky);    color: var(--black); }
 .badge-keluar { background: var(--violet); color: var(--white); border-color: var(--black); }
+.badge-lunas  { background: var(--green);  color: var(--black); }
+.badge-belum  { background: var(--red);    color: var(--white); }
+.badge-menunggu  { background: var(--yellow); color: var(--black); }
+.badge-disetujui { background: var(--green);  color: var(--black); }
+.badge-ditolak   { background: var(--red);    color: var(--white); }
+
+/* === BUKTI LINK === */
+.bukti-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--black);
+    background: var(--yellow);
+    border: 2px solid var(--black);
+    padding: 4px 9px;
+    text-decoration: none;
+    display: inline-block;
+    transition: transform 0.1s;
+}
+.bukti-link:hover { transform: translate(-1px, -1px); }
 
 /* === PROGRESS === */
 .progress-track {
@@ -121,6 +139,9 @@ body {
 }
 .progress-fill.violet { background: var(--violet); }
 .progress-fill.sky    { background: var(--sky);    }
+.progress-fill.safe    { background: var(--sky); }
+.progress-fill.warning { background: var(--yellow); }
+.progress-fill.danger  { background: var(--red); }
 .progress-fill.stripe {
     background: repeating-linear-gradient(
         45deg,
@@ -130,6 +151,78 @@ body {
         var(--yellow) 8px
     );
 }
+
+/* === BUDGET CARD (Anggaran per Divisi) === */
+.budget-item {
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    padding: 14px 18px;
+    background: var(--white);
+}
+.budget-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+.budget-item-nominal {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #555;
+}
+
+/* === ROW TANPA BUKTI (highlight) === */
+tbody tr.row-warning {
+    background: rgba(232, 67, 58, 0.08);
+    border-left: 4px solid var(--red);
+}
+tbody tr.row-warning:hover { background: rgba(232, 67, 58, 0.16); }
+
+/* === PROTEKSI RINGAN (mode admin) === */
+.konten-sensitif {
+    filter: none;
+    transition: filter 0.2s ease;
+}
+body:not(.mode-admin) .konten-sensitif {
+    filter: blur(7px);
+    pointer-events: none;
+    user-select: none;
+}
+.gerbang-admin {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(250, 250, 245, 0.55);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    z-index: 5;
+}
+body:not(.mode-admin) .gerbang-admin { display: flex; }
+body.mode-admin .gerbang-admin { display: none; }
+
+/* === FILTER BAR (date inputs) === */
+input[type="date"], input[type="text"]#cari-transaksi {
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    background: var(--white);
+    color: var(--black);
+    border-radius: 0;
+}
+input[type="date"] {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+input[type="text"]#cari-transaksi:focus,
+input[type="date"]:focus { outline: 3px solid var(--yellow); outline-offset: 2px; }
 
 /* === BUTTON === */
 .btn {

@@ -33,7 +33,10 @@
                     <span style="width: 8px; height: 8px; background: var(--black); border-radius: 50%; display: inline-block;" class="ping"></span>
                     Live · Sheets
                 </div>
-                <button onclick="muatDataKeuangan()" class="btn">
+                <button onclick="bukaModeAdmin()" id="tombol-admin" class="btn" style="background: var(--sky);">
+                    🔒 Mode Admin
+                </button>
+                <button onclick="muatSemuaData()" class="btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
                     </svg>
@@ -77,8 +80,20 @@
             <div class="progress-track" style="margin-top: 12px;">
                 <div id="saldo-progress" class="progress-fill stripe" style="width: 0%;"></div>
             </div>
+            <p id="saldo-minimum-teks" style="font-size: 0.6rem; font-family: 'Space Mono', monospace; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 10px;"></p>
         </div>
 
+    </div>
+
+
+    <!-- ALERT: TRANSAKSI TANPA BUKTI -->
+    <div id="alert-bukti" class="card" style="display: none; padding: 18px 28px; background: var(--red); border-color: var(--black);">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <span style="font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--white); flex-shrink: 0;">⚠</span>
+            <p id="alert-bukti-text" style="font-family: 'Space Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; color: var(--white); text-transform: uppercase; margin: 0;">
+                &mdash;
+            </p>
+        </div>
     </div>
 
 
@@ -120,6 +135,17 @@
     </div>
 
 
+    <!-- ROW 2.5: ANGGARAN PER DIVISI -->
+    <div class="card" style="padding: 28px 32px;">
+
+        <div class="section-head">// Anggaran vs Realisasi per Divisi</div>
+
+        <div id="anggaran-list" style="display: flex; flex-direction: column; gap: 14px;">
+            <p style="font-family: 'Space Mono', monospace; font-size: 0.65rem; color: #999; text-transform: uppercase; letter-spacing: 0.08em;">Memuat data anggaran…</p>
+        </div>
+    </div>
+
+
     <!-- ROW 3: CHART + TABLE -->
     <div class="grid-chart-table" style="display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start;">
 
@@ -137,7 +163,7 @@
 
 
         <!-- Right: Table -->
-        <div class="card" style="overflow: hidden;">
+        <div class="card" style="overflow: hidden; position: relative;">
 
             <!-- Table Header -->
             <div style="padding: 24px 28px 20px; border-bottom: var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
@@ -145,27 +171,105 @@
                     <div style="font-family: 'Space Mono', monospace; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #777; margin-bottom: 4px;">Buku Besar</div>
                     <h2 style="font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1;">Arus Kas &amp; Mutasi</h2>
                 </div>
-                <select id="filter-kategori" onchange="filterData()">
+            </div>
+
+            <!-- Filter Bar -->
+            <div style="padding: 16px 28px; border-bottom: var(--border); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: rgba(0,0,0,0.02);">
+                <input type="text" id="cari-transaksi" onkeyup="terapkanFilterTransaksi()" placeholder="Cari rincian / PJ / divisi…" style="flex: 1; min-width: 180px; font-family: 'Space Mono', monospace; font-size: 0.7rem; padding: 9px 12px; border: var(--border); background: var(--white);">
+
+                <select id="filter-kategori" onchange="terapkanFilterTransaksi()">
                     <option value="semua">Semua Transaksi</option>
                     <option value="masuk">Hanya Masuk</option>
                     <option value="keluar">Hanya Keluar</option>
                 </select>
+
+                <select id="filter-divisi" onchange="terapkanFilterTransaksi()">
+                    <option value="semua">Semua Divisi</option>
+                </select>
+
+                <input type="date" id="tanggal-dari" onchange="terapkanFilterTransaksi()" title="Dari tanggal">
+                <span style="font-family: 'Space Mono', monospace; font-size: 0.65rem; color: #999;">s/d</span>
+                <input type="date" id="tanggal-sampai" onchange="terapkanFilterTransaksi()" title="Sampai tanggal">
+
+                <button onclick="resetFilterTransaksi()" class="btn" style="background: var(--white); padding: 9px 14px;">Reset</button>
             </div>
 
-            <!-- Table Body -->
-            <div style="overflow-y: auto; max-height: 420px;">
+            <!-- Konten sensitif: dibungkus gerbang admin -->
+            <div class="konten-sensitif">
+                <div style="overflow-x: auto; overflow-y: auto; max-height: 480px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="text-align: left;">No</th>
+                                <th style="text-align: left;">Tanggal</th>
+                                <th style="text-align: left;">Rincian</th>
+                                <th style="text-align: left;">Penanggung Jawab</th>
+                                <th style="text-align: left;">Divisi</th>
+                                <th style="text-align: left;">Sumber Dana</th>
+                                <th style="text-align: right;">Nominal</th>
+                                <th style="text-align: center;">Bukti</th>
+                                <th style="text-align: center;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabel-transaksi">
+                            <tr>
+                                <td colspan="9" style="padding: 60px 24px; text-align: center;">
+                                    <div class="spinner"></div>
+                                    <p style="font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #777;">Menghubungkan ke Sheets…</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="gerbang-admin" onclick="bukaModeAdmin()">
+                <div style="font-size: 1.6rem;">🔒</div>
+                <div style="font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 8px;">Klik untuk buka detail transaksi</div>
+                <div style="font-family: 'Space Mono', monospace; font-size: 0.55rem; color: #777; margin-top: 4px;">Nominal &amp; bukti nota — akses bendahara</div>
+            </div>
+
+
+        </div>
+    </div>
+
+
+    <!-- ROW 4: PENGAJUAN DANA -->
+    <div class="card" style="overflow: hidden; position: relative;">
+
+        <!-- Header -->
+        <div style="padding: 24px 28px 20px; border-bottom: var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <div style="font-family: 'Space Mono', monospace; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #777; margin-bottom: 4px;">Approval Panitia</div>
+                <h2 style="font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1;">Pengajuan Dana</h2>
+            </div>
+            <select id="filter-status-pengajuan" onchange="filterPengajuan()">
+                <option value="semua">Semua Status</option>
+                <option value="menunggu">Menunggu</option>
+                <option value="disetujui">Disetujui</option>
+                <option value="ditolak">Ditolak</option>
+            </select>
+        </div>
+
+        <!-- Konten sensitif: dibungkus gerbang admin -->
+        <div class="konten-sensitif">
+            <div style="overflow-x: auto; overflow-y: auto; max-height: 420px;">
                 <table>
                     <thead>
                         <tr>
+                            <th style="text-align: left;">No</th>
                             <th style="text-align: left;">Tanggal</th>
-                            <th style="text-align: left;">Keterangan</th>
                             <th style="text-align: left;">Divisi</th>
-                            <th style="text-align: right;">Nominal</th>
+                            <th style="text-align: left;">Rincian Kebutuhan</th>
+                            <th style="text-align: left;">Penanggung Jawab</th>
+                            <th style="text-align: left;">Metode</th>
+                            <th style="text-align: left;">Nota Fisik</th>
+                            <th style="text-align: right;">Nominal Diajukan</th>
+                            <th style="text-align: center;">Status</th>
                         </tr>
                     </thead>
-                    <tbody id="tabel-transaksi">
+                    <tbody id="tabel-pengajuan">
                         <tr>
-                            <td colspan="4" style="padding: 60px 24px; text-align: center;">
+                            <td colspan="9" style="padding: 60px 24px; text-align: center;">
                                 <div class="spinner"></div>
                                 <p style="font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #777;">Menghubungkan ke Sheets…</p>
                             </td>
@@ -173,8 +277,12 @@
                     </tbody>
                 </table>
             </div>
-
         </div>
+        <div class="gerbang-admin" onclick="bukaModeAdmin()">
+            <div style="font-size: 1.6rem;">🔒</div>
+            <div style="font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 8px;">Klik untuk buka detail pengajuan</div>
+        </div>
+
     </div>
 
 </main>
