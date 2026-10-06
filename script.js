@@ -1,12 +1,7 @@
 const SPREADSHEET_ID = '1embeXKcM-5aLoGiyyA3WpPSYnqcPutmVGETGPJ5LP0U';
 const SHEET_NAME = 'Transaksi';
-const SHEET_PENGAJUAN = 'Pengajuan';
-const SHEET_ANGGARAN = 'Anggaran';
 
 let semuaDataArray = [];
-let semuaDataPengajuan = [];
-let semuaDataAnggaran = [];
-let realisasiPerDivisiGlobal = {}; // diisi ulang setiap muatDataKeuangan()
 let chartInstance = null;
 
 // ---------- UTILITAS ----------
@@ -18,9 +13,7 @@ function formatRupiah(angka) {
 }
 
 // Bangun peta "nama header" -> index kolom.
-// Ini membuat script tahan terhadap perubahan urutan/posisi kolom di Sheet
-// (mis. kolom dimulai dari B, ada kolom kosong di A, dst) selama nama
-// header di baris pertama Sheet tetap sama.
+// Tahan terhadap perubahan urutan/posisi kolom di Sheet selama nama header tetap.
 function buatPetaKolom(cols) {
     const peta = {};
     cols.forEach((col, i) => {
@@ -44,7 +37,6 @@ function nilaiTeks(cell, fallback = '-') {
 }
 
 // gviz mengembalikan tanggal dalam bentuk string "Date(tahun,bulan,tanggal)" (bulan 0-based)
-// pada properti .v. Fungsi ini mengubahnya jadi objek Date asli untuk keperluan filter rentang tanggal.
 function parseTanggalCell(cell) {
     if (!cell) return null;
     const v = cell.v;
@@ -73,7 +65,6 @@ async function muatDataKeuangan() {
 
         semuaDataArray = [];
         let totalMasuk = 0, totalKeluar = 0;
-        let pengeluaranDivisi = {};
 
         rows.forEach(row => {
             const cellNo      = ambilSel(row, peta, 'No');
@@ -109,8 +100,6 @@ async function muatDataKeuangan() {
                 totalMasuk += nominal;
             } else {
                 totalKeluar += nominal;
-                const namaDivisi = divisi || 'Umum';
-                pengeluaranDivisi[namaDivisi] = (pengeluaranDivisi[namaDivisi] || 0) + nominal;
             }
 
             semuaDataArray.push({
@@ -132,11 +121,8 @@ async function muatDataKeuangan() {
         const rasioSaldo = totalMasuk > 0 ? Math.min((sisaSaldo / totalMasuk) * 100, 100) : 0;
         document.getElementById('saldo-progress').style.width = `${Math.max(rasioSaldo, 0)}%`;
 
-        realisasiPerDivisiGlobal = pengeluaranDivisi;
-
         isiOpsiFilterDivisi(semuaDataArray);
         terapkanFilterTransaksi();
-        updateGrafikDivisi(pengeluaranDivisi);
         perbaruiAlertBukti(semuaDataArray);
 
     } catch (error) {
@@ -201,8 +187,6 @@ function tampilkanDataKeTabel(data) {
         `;
     });
 }
-
-// ---------- FILTER ----------
 
 // ---------- FILTER & PENCARIAN ----------
 
@@ -274,158 +258,6 @@ function resetFilterTransaksi() {
     terapkanFilterTransaksi();
 }
 
-// ---------- CHART DIVISI ----------
-
-function updateGrafikDivisi(dataDivisi) {
-    const labels = Object.keys(dataDivisi);
-    const values = Object.values(dataDivisi);
-    const ctx    = document.getElementById('chartDivisi').getContext('2d');
-
-    if (chartInstance) chartInstance.destroy();
-    if (labels.length === 0) return;
-
-    chartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels,
-            datasets: [{
-                data: values,
-                backgroundColor: ['#FF8787', '#FDE047', '#70BDB2', '#3CCF6E', '#E8433A'],
-                borderWidth: 3,
-                borderColor: '#0A0A0A',
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        font: { size: 10, weight: '700', family: 'Space Mono' },
-                        boxWidth: 12, boxHeight: 12,
-                        padding: 12,
-                        color: '#0A0A0A',
-                    }
-                },
-                tooltip: {
-                    backgroundColor: '#0A0A0A',
-                    titleColor: '#70BDB2',
-                    bodyColor: '#FAFAF5',
-                    padding: 12,
-                    titleFont: { weight: '700', family: 'Space Mono', size: 11 },
-                    bodyFont:  { family: 'Space Mono', size: 11 },
-                    callbacks: {
-                        label: ctx => ` ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(ctx.parsed)}`
-                    }
-                }
-            },
-            cutout: '60%',
-        }
-    });
-}
-
-// ---------- AMBIL DATA PENGAJUAN DARI GOOGLE SHEETS ----------
-
-async function muatDataPengajuan() {
-    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_PENGAJUAN}&tq=`;
-
-    try {
-        const respon = await fetch(url);
-        if (!respon.ok) throw new Error('Gagal fetch');
-        const teks = await respon.text();
-
-        const jsonMurni = JSON.parse(teks.substring(teks.indexOf("{"), teks.lastIndexOf("}") + 1));
-        const rows = jsonMurni.table.rows;
-        const peta = buatPetaKolom(jsonMurni.table.cols);
-
-        semuaDataPengajuan = [];
-
-        rows.forEach(row => {
-            const cellNo      = ambilSel(row, peta, 'No');
-            const cellTanggal = ambilSel(row, peta, 'Tanggal Pengajuan');
-            const cellDivisi  = ambilSel(row, peta, 'Divisi');
-            const cellRincian = ambilSel(row, peta, 'Rincian Kebutuhan');
-            const cellPJ      = ambilSel(row, peta, 'Penanggung Jawab');
-            const cellNominal = ambilSel(row, peta, 'Nominal Diajukan');
-            const cellMetode  = ambilSel(row, peta, 'Metode Pengajuan');
-            const cellNota    = ambilSel(row, peta, 'Nota Fisik dari Bendahara');
-            const cellStatus  = ambilSel(row, peta, 'Status');
-
-            const rincian = nilaiTeks(cellRincian, '');
-            if (!rincian) return; // baris kosong, lewati
-
-            const no       = nilaiTeks(cellNo, '-');
-            const tanggal  = cellTanggal ? (cellTanggal.f || cellTanggal.v) : '-';
-            const divisi   = nilaiTeks(cellDivisi, 'Umum');
-            const pj       = nilaiTeks(cellPJ, '-');
-            const nominal  = cellNominal ? (parseFloat(cellNominal.v) || 0) : 0;
-            const metode   = nilaiTeks(cellMetode, '-');
-            const notaFisik= nilaiTeks(cellNota, '-');
-            const statusRaw= nilaiTeks(cellStatus, 'Menunggu');
-            const statusLc = statusRaw.toLowerCase();
-
-            semuaDataPengajuan.push({ no, tanggal, divisi, rincian, pj, nominal, metode, notaFisik, status: statusRaw, statusLc });
-        });
-
-        tampilkanDataPengajuan(semuaDataPengajuan);
-
-    } catch (error) {
-        console.error("Gagal memuat data pengajuan:", error);
-        document.getElementById('tabel-pengajuan').innerHTML = `
-            <tr>
-                <td colspan="7" style="padding: 48px 24px; text-align: center;">
-                    <div style="font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--red); margin-bottom: 8px;">[ERROR] Gagal memuat data</div>
-                    <p style="font-family: 'Space Mono', monospace; font-size: 0.6rem; color: #666;">Pastikan tab "Pengajuan" ada dan akses Google Sheets = Viewer publik.</p>
-                </td>
-            </tr>
-        `;
-    }
-}
-
-function tampilkanDataPengajuan(data) {
-    const el = document.getElementById('tabel-pengajuan');
-    el.innerHTML = '';
-
-    if (data.length === 0) {
-        el.innerHTML = `<tr><td colspan="9" style="padding: 48px 24px; text-align: center; font-family: 'Space Mono', monospace; font-size: 0.65rem; color: #999; text-transform: uppercase; letter-spacing: 0.08em;">// Tidak ada pengajuan</td></tr>`;
-        return;
-    }
-
-    data.forEach(item => {
-        let kelasBadge = 'badge-menunggu';
-        if (item.statusLc.includes('disetujui')) kelasBadge = 'badge-disetujui';
-        else if (item.statusLc.includes('ditolak')) kelasBadge = 'badge-ditolak';
-
-        const notaBelum = item.notaFisik.toLowerCase().includes('belum');
-
-        el.innerHTML += `
-            <tr>
-                <td style="padding: 13px 16px; font-family: 'Space Mono', monospace; font-size: 0.65rem; color: #888;">${item.no}</td>
-                <td style="padding: 13px 16px; font-family: 'Space Mono', monospace; font-size: 0.6rem; color: #888; white-space: nowrap;">${item.tanggal}</td>
-                <td style="padding: 13px 16px;">
-                    <span class="divisi-chip">${item.divisi}</span>
-                </td>
-                <td style="padding: 13px 16px; font-size: 0.78rem; font-weight: 700;">${item.rincian}</td>
-                <td style="padding: 13px 16px; font-size: 0.75rem; white-space: nowrap;">${item.pj}</td>
-                <td style="padding: 13px 16px; font-size: 0.7rem; white-space: nowrap;">${item.metode}</td>
-                <td style="padding: 13px 16px; font-size: 0.7rem; white-space: nowrap; ${notaBelum ? 'color: var(--red); font-weight: 700;' : ''}">${item.notaFisik}</td>
-                <td style="padding: 13px 16px; text-align: right; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 0.82rem; white-space: nowrap;">
-                    ${formatRupiah(item.nominal)}
-                </td>
-                <td style="padding: 13px 16px; text-align: center; white-space: nowrap;">
-                    <span class="badge ${kelasBadge}">${item.status}</span>
-                </td>
-            </tr>
-        `;
-    });
-}
-
-function filterPengajuan() {
-    const v = document.getElementById('filter-status-pengajuan').value;
-    tampilkanDataPengajuan(v === 'semua' ? semuaDataPengajuan : semuaDataPengajuan.filter(i => i.statusLc.includes(v)));
-}
-
 // ---------- DETEKSI TRANSAKSI TANPA BUKTI ----------
 
 function perbaruiAlertBukti(data) {
@@ -441,85 +273,10 @@ function perbaruiAlertBukti(data) {
     }
 }
 
-// ---------- AMBIL DATA ANGGARAN & BANDINGKAN DENGAN REALISASI ----------
-
-async function muatDataAnggaran() {
-    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_ANGGARAN}&tq=`;
-    const elList = document.getElementById('anggaran-list');
-
-    try {
-        const respon = await fetch(url);
-        if (!respon.ok) throw new Error('Gagal fetch');
-        const teks = await respon.text();
-
-        const jsonMurni = JSON.parse(teks.substring(teks.indexOf("{"), teks.lastIndexOf("}") + 1));
-        const rows = jsonMurni.table.rows;
-        const peta = buatPetaKolom(jsonMurni.table.cols);
-
-        semuaDataAnggaran = [];
-
-        rows.forEach(row => {
-            const cellDivisi = ambilSel(row, peta, 'Divisi');
-            const cellBudget = ambilSel(row, peta, 'Budget');
-
-            const divisi = nilaiTeks(cellDivisi, '');
-            if (!divisi) return; // baris kosong, lewati
-
-            const budget = cellBudget ? (parseFloat(cellBudget.v) || 0) : 0;
-            semuaDataAnggaran.push({ divisi, budget });
-        });
-
-        tampilkanAnggaran(semuaDataAnggaran);
-
-    } catch (error) {
-        console.error("Gagal memuat data anggaran:", error);
-        elList.innerHTML = `<p style="font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--red); text-transform: uppercase; letter-spacing: 0.08em;">[ERROR] Gagal memuat data. Pastikan tab "Anggaran" ada dengan kolom Divisi &amp; Budget.</p>`;
-    }
-}
-
-function tampilkanAnggaran(dataAnggaran) {
-    const elList = document.getElementById('anggaran-list');
-    elList.innerHTML = '';
-
-    if (dataAnggaran.length === 0) {
-        elList.innerHTML = `<p style="font-family: 'Space Mono', monospace; font-size: 0.65rem; color: #999; text-transform: uppercase; letter-spacing: 0.08em;">// Belum ada data anggaran. Tambahkan tab "Anggaran" dengan kolom Divisi &amp; Budget.</p>`;
-        return;
-    }
-
-    dataAnggaran.forEach(item => {
-        const realisasi = realisasiPerDivisiGlobal[item.divisi] || 0;
-        const persen = item.budget > 0 ? Math.min((realisasi / item.budget) * 100, 100) : 0;
-
-        let kelasWarna = 'safe';
-        if (persen >= 100) kelasWarna = 'danger';
-        else if (persen >= 75) kelasWarna = 'warning';
-
-        const overBudget = item.budget > 0 && realisasi > item.budget;
-
-        elList.innerHTML += `
-            <div class="budget-item">
-                <div class="budget-item-head">
-                    <span class="divisi-chip">${item.divisi}</span>
-                    <span class="budget-item-nominal">
-                        ${formatRupiah(realisasi)} / ${formatRupiah(item.budget)}
-                        ${overBudget ? '<span style="color:var(--red);"> · Melebihi anggaran!</span>' : ''}
-                    </span>
-                </div>
-                <div class="progress-track">
-                    <div class="progress-fill ${kelasWarna}" style="width: ${Math.max(persen, 2)}%;"></div>
-                </div>
-            </div>
-        `;
-    });
-}
-
-// ---------- MUAT SEMUA (Transaksi + Pengajuan + Anggaran) ----------
+// ---------- MUAT SEMUA ----------
 
 async function muatSemuaData() {
-    // Anggaran butuh data realisasi pengeluaran dari Transaksi, jadi ditunggu dulu.
     await muatDataKeuangan();
-    muatDataPengajuan();
-    muatDataAnggaran();
 }
 
 // ---------- INIT ----------
