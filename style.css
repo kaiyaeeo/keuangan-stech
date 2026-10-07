@@ -8,6 +8,7 @@
     --sky:      #70BDB2;
     --red:      #E8433A;
     --green:    #a1d9b3;
+    --wa:       #25D366;
     --border:   3px solid #0A0A0A;
     --shadow:   5px 5px 0px #0A0A0A;
     --shadow-sm:3px 3px 0px #0A0A0A;
@@ -324,4 +325,75 @@ select:focus { outline: 3px solid var(--yellow); outline-offset: 2px; }
 @media (max-width: 640px) {
     .grid-actions { grid-template-columns: 1fr !important; }
     .header-inner { flex-direction: column !important; align-items: flex-start !important; }
+}
+
+/* === WHATSAPP FLOATING BUTTON === */
+.wa-float {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 60px;
+    height: 60px;
+    background: var(--wa);
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    z-index: 999;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.wa-float:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: var(--shadow);
+}
+
+.wa-float:active {
+    transform: translate(0, 0);
+    box-shadow: none;
+}
+
+/* Tooltip label (muncul saat hover, desktop only) */
+.wa-tooltip {
+    position: absolute;
+    right: 72px;
+    top: 50%;
+    transform: translateY(-50%) translateX(8px);
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    white-space: nowrap;
+    border: 2px solid var(--black);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.wa-float:hover .wa-tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* Ukuran lebih kecil di layar mobile */
+@media (max-width: 640px) {
+    .wa-float {
+        bottom: 16px;
+        right: 16px;
+        width: 52px;
+        height: 52px;
+    }
+    .wa-float svg {
+        width: 22px;
+        height: 22px;
+    }
+    .wa-tooltip {
+        display: none;
+    }
 }

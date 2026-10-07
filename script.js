@@ -2,7 +2,6 @@ const SPREADSHEET_ID = '1embeXKcM-5aLoGiyyA3WpPSYnqcPutmVGETGPJ5LP0U';
 const SHEET_NAME = 'Transaksi';
 
 let semuaDataArray = [];
-let chartInstance = null;
 
 // ---------- UTILITAS ----------
 
